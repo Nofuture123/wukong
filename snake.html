@@ -3,49 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>霓虹蛇 | Neon Snake</title>
+<title>灵蛇戏珠</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
+  :root {
+    --ink: #2c1810;
+    --ink-light: #5a3a28;
+    --paper: #f4e8d0;
+    --paper-dark: #e8d5b0;
+    --vermillion: #c23a2b;
+    --vermillion-glow: rgba(194, 58, 43, 0.4);
+    --gold: #c4943a;
+    --gold-light: #e8c36a;
+    --jade: #2d6b4f;
+    --jade-light: #4a9e73;
+    --cloud: rgba(244, 232, 208, 0.6);
+  }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #0a0a0f;
+    background: var(--paper);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Noto Serif SC', serif;
     overflow: hidden;
     position: relative;
   }
 
-  /* Scanline overlay */
+  /* Rice paper texture */
   body::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.08) 2px,
-      rgba(0, 0, 0, 0.08) 4px
-    );
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(200, 180, 140, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(180, 160, 120, 0.2) 0%, transparent 40%),
+      radial-gradient(ellipse at 60% 80%, rgba(190, 170, 130, 0.25) 0%, transparent 45%);
     pointer-events: none;
-    z-index: 100;
+    z-index: 0;
   }
 
-  /* Background grid */
+  /* Ink wash corners */
   body::after {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background:
-      linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+      radial-gradient(ellipse at 0% 0%, rgba(44, 24, 16, 0.08) 0%, transparent 30%),
+      radial-gradient(ellipse at 100% 100%, rgba(44, 24, 16, 0.06) 0%, transparent 25%),
+      radial-gradient(ellipse at 100% 0%, rgba(44, 24, 16, 0.04) 0%, transparent 20%);
     pointer-events: none;
     z-index: 0;
   }
@@ -56,34 +67,45 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
   }
 
   .title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2.8rem;
-    font-weight: 900;
-    letter-spacing: 8px;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, #00ff88, #00ccff, #ff00cc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: none;
-    filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4));
-    animation: titlePulse 3s ease-in-out infinite;
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 3.2rem;
+    color: var(--ink);
+    letter-spacing: 12px;
+    position: relative;
+    text-shadow: 2px 2px 0 rgba(244, 232, 208, 0.8);
   }
 
-  @keyframes titlePulse {
-    0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4)); }
-    50% { filter: drop-shadow(0 0 35px rgba(0, 204, 255, 0.6)); }
+  .title::before {
+    content: '~ ';
+    color: var(--vermillion);
+    font-size: 1.5rem;
+    vertical-align: middle;
+  }
+
+  .title::after {
+    content: ' ~';
+    color: var(--vermillion);
+    font-size: 1.5rem;
+    vertical-align: middle;
+  }
+
+  .subtitle {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    letter-spacing: 6px;
+    margin-top: -8px;
+    opacity: 0.6;
   }
 
   .hud {
     display: flex;
-    gap: 40px;
+    gap: 50px;
     align-items: center;
-    font-family: 'Orbitron', sans-serif;
   }
 
   .hud-item {
@@ -94,45 +116,62 @@
   }
 
   .hud-label {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     letter-spacing: 4px;
-    color: rgba(0, 255, 136, 0.5);
-    font-weight: 400;
+    color: var(--ink-light);
+    opacity: 0.5;
   }
 
   .hud-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #00ff88;
-    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
-    min-width: 80px;
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2.2rem;
+    color: var(--ink);
+    min-width: 60px;
     text-align: center;
     transition: transform 0.15s, color 0.15s;
   }
 
   .hud-value.best {
-    color: #00ccff;
-    text-shadow: 0 0 10px rgba(0, 204, 255, 0.6);
+    color: var(--vermillion);
   }
 
   .hud-value.pop {
     transform: scale(1.3);
-    color: #fff;
+    color: var(--vermillion);
   }
 
   .canvas-container {
     position: relative;
-    border: 2px solid rgba(0, 255, 136, 0.3);
-    border-radius: 4px;
+    border: 3px solid var(--ink);
+    border-radius: 2px;
     box-shadow:
-      0 0 30px rgba(0, 255, 136, 0.15),
-      inset 0 0 30px rgba(0, 255, 136, 0.05),
-      0 0 80px rgba(0, 255, 136, 0.08);
+      6px 6px 0 rgba(44, 24, 16, 0.1),
+      inset 0 0 40px rgba(44, 24, 16, 0.05);
+    background: var(--paper);
   }
+
+  /* Corner ornaments using pseudo-elements on wrapper */
+  .canvas-border {
+    position: relative;
+    padding: 12px;
+    background: transparent;
+  }
+
+  .corner-ornament {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: var(--vermillion);
+    border-style: solid;
+    opacity: 0.7;
+  }
+  .corner-ornament.tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
+  .corner-ornament.tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
+  .corner-ornament.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
+  .corner-ornament.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
 
   canvas {
     display: block;
-    border-radius: 2px;
   }
 
   .overlay {
@@ -142,10 +181,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(5, 5, 10, 0.85);
-    backdrop-filter: blur(4px);
-    border-radius: 2px;
-    transition: opacity 0.3s;
+    background: rgba(244, 232, 208, 0.92);
+    backdrop-filter: blur(3px);
+    transition: opacity 0.4s;
     z-index: 10;
   }
 
@@ -155,90 +193,90 @@
   }
 
   .overlay-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2rem;
-    font-weight: 900;
-    letter-spacing: 6px;
-    margin-bottom: 12px;
-  }
-
-  .overlay-title.gameover {
-    background: linear-gradient(135deg, #ff0066, #ff6600);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 15px rgba(255, 0, 102, 0.5));
-  }
-
-  .overlay-title.ready {
-    background: linear-gradient(135deg, #00ff88, #00ccff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.5));
-  }
-
-  .overlay-sub {
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 3px;
-    margin-bottom: 30px;
-  }
-
-  .overlay-score {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 3.5rem;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2.6rem;
     margin-bottom: 8px;
   }
 
+  .overlay-title.gameover {
+    color: var(--vermillion);
+  }
+
+  .overlay-title.ready {
+    color: var(--ink);
+  }
+
+  .overlay-sub {
+    font-size: 1rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+
+  .overlay-score {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 4rem;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
   .overlay-score-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     letter-spacing: 5px;
-    color: rgba(0, 255, 136, 0.6);
-    margin-bottom: 30px;
+    color: var(--ink-light);
+    opacity: 0.5;
+    margin-bottom: 28px;
   }
 
   .btn {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 4px;
-    padding: 14px 40px;
-    border: 2px solid #00ff88;
+    letter-spacing: 6px;
+    padding: 12px 36px;
+    border: 2px solid var(--ink);
     background: transparent;
-    color: #00ff88;
+    color: var(--ink);
     cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s;
+    transition: all 0.25s;
     position: relative;
-    overflow: hidden;
-  }
-
-  .btn::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%; right: 0; bottom: 0;
-    width: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.15), transparent);
-    transition: left 0.4s;
   }
 
   .btn:hover {
-    background: rgba(0, 255, 136, 0.1);
-    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
-    transform: translateY(-1px);
+    background: var(--vermillion);
+    border-color: var(--vermillion);
+    color: var(--paper);
+    box-shadow: 4px 4px 0 rgba(44, 24, 16, 0.15);
+    transform: translate(-1px, -1px);
   }
-
-  .btn:hover::before { left: 100%; }
 
   .controls-hint {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--ink-light);
     letter-spacing: 2px;
-    margin-top: 14px;
+    opacity: 0.4;
+    margin-top: 8px;
+  }
+
+  /* Seal stamp */
+  .seal {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--vermillion);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 1.2rem;
+    color: var(--vermillion);
+    opacity: 0.35;
+    transform: rotate(-8deg);
+    z-index: 2;
+    pointer-events: none;
   }
 
   /* Mobile controls */
@@ -251,70 +289,70 @@
   .d-btn {
     width: 56px;
     height: 56px;
-    border: 1px solid rgba(0, 255, 136, 0.3);
-    background: rgba(0, 255, 136, 0.05);
-    color: rgba(0, 255, 136, 0.7);
-    font-size: 1.4rem;
+    border: 2px solid var(--ink);
+    background: rgba(244, 232, 208, 0.8);
+    color: var(--ink);
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 2px;
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
   }
 
   .d-btn:active {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: #00ff88;
+    background: var(--vermillion);
+    border-color: var(--vermillion);
+    color: var(--paper);
   }
 
   .d-row { display: flex; justify-content: center; gap: 6px; }
   .d-spacer { width: 56px; height: 56px; }
 
-  @media (max-width: 600px) or (pointer: coarse) {
+  @media (max-width: 600px), (pointer: coarse) {
     .mobile-controls { display: flex; flex-direction: column; align-items: center; }
     .controls-hint { display: none; }
-    .title { font-size: 1.6rem; letter-spacing: 4px; }
-    .hud-value { font-size: 1.3rem; }
-  }
-
-  /* Particles */
-  .particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 20;
+    .title { font-size: 2rem; letter-spacing: 6px; }
+    .hud-value { font-size: 1.6rem; }
+    .canvas-border { padding: 6px; }
   }
 </style>
 </head>
 <body>
 
 <div class="game-wrapper">
-  <div class="title">霓虹蛇</div>
+  <div class="title">灵蛇戏珠</div>
+  <div class="subtitle">水墨丹青</div>
 
   <div class="hud">
     <div class="hud-item">
-      <span class="hud-label">SCORE</span>
-      <span class="hud-value" id="score">0</span>
+      <span class="hud-label">得分</span>
+      <span class="hud-value" id="score">〇</span>
     </div>
     <div class="hud-item">
-      <span class="hud-label">BEST</span>
-      <span class="hud-value best" id="best">0</span>
+      <span class="hud-label">最高</span>
+      <span class="hud-value best" id="best">〇</span>
     </div>
   </div>
 
-  <div class="canvas-container">
-    <canvas id="game"></canvas>
-    <div class="overlay" id="overlay">
-      <div class="overlay-title ready" id="overlayTitle">准备好了吗</div>
-      <div class="overlay-sub" id="overlaySub"></div>
-      <div class="overlay-score" id="overlayScore" style="display:none"></div>
-      <div class="overlay-score-label" id="overlayScoreLabel" style="display:none"></div>
-      <button class="btn" id="startBtn">开始</button>
+  <div class="canvas-border">
+    <div class="corner-ornament tl"></div>
+    <div class="corner-ornament tr"></div>
+    <div class="corner-ornament bl"></div>
+    <div class="corner-ornament br"></div>
+    <div class="canvas-container">
+      <canvas id="game"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="overlay-title ready" id="overlayTitle">蛇行天下</div>
+        <div class="overlay-sub" id="overlaySub">方寸之间，灵动自如</div>
+        <div class="overlay-score" id="overlayScore" style="display:none"></div>
+        <div class="overlay-score-label" id="overlayScoreLabel" style="display:none"></div>
+        <button class="btn" id="startBtn">开局</button>
+      </div>
+      <div class="seal">蛇</div>
     </div>
   </div>
 
@@ -323,13 +361,13 @@
   <div class="mobile-controls">
     <div class="d-row">
       <div class="d-spacer"></div>
-      <div class="d-btn" data-dir="up">▲</div>
+      <div class="d-btn" data-dir="up">上</div>
       <div class="d-spacer"></div>
     </div>
     <div class="d-row">
-      <div class="d-btn" data-dir="left">◀</div>
-      <div class="d-btn" data-dir="down">▼</div>
-      <div class="d-btn" data-dir="right">▶</div>
+      <div class="d-btn" data-dir="left">左</div>
+      <div class="d-btn" data-dir="down">下</div>
+      <div class="d-btn" data-dir="right">右</div>
     </div>
   </div>
 </div>
@@ -352,10 +390,36 @@ const ROWS = 25;
 canvas.width = COLS * CELL;
 canvas.height = ROWS * CELL;
 
-let snake, dir, nextDir, food, score, best, running, speed, lastTime, particles;
+// Chinese number conversion
+const CN_NUMS = ['〇','一','二','三','四','五','六','七','八','九'];
+function toCN(n) {
+  if (n === 0) return '〇';
+  if (n < 10) return CN_NUMS[n];
+  if (n < 100) {
+    const tens = Math.floor(n / 10);
+    const ones = n % 10;
+    let s = '';
+    if (tens > 1) s += CN_NUMS[tens];
+    s += '十';
+    if (ones > 0) s += CN_NUMS[ones];
+    return s;
+  }
+  return String(n);
+}
 
-best = parseInt(localStorage.getItem('neonSnakeBest') || '0');
-bestEl.textContent = best;
+let snake, dir, nextDir, food, score, best, running, speed, lastTime, particles, inkTrails;
+
+best = parseInt(localStorage.getItem('cnSnakeBest') || '0');
+bestEl.textContent = toCN(best);
+
+// Colors
+const INK = '#2c1810';
+const INK_MED = 'rgba(44, 24, 16, 0.6)';
+const INK_LIGHT = 'rgba(44, 24, 16, 0.15)';
+const PAPER = '#f4e8d0';
+const VERMILLION = '#c23a2b';
+const GOLD = '#c4943a';
+const JADE = '#2d6b4f';
 
 function init() {
   const mid = Math.floor(COLS / 2);
@@ -370,7 +434,8 @@ function init() {
   speed = 120;
   lastTime = 0;
   particles = [];
-  scoreEl.textContent = '0';
+  inkTrails = [];
+  scoreEl.textContent = '〇';
   placeFood();
 }
 
@@ -380,51 +445,64 @@ function placeFood() {
     pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
   } while (snake.some(s => s.x === pos.x && s.y === pos.y));
   food = pos;
-  food.hue = Math.random() * 360;
+  // Randomly pick food type
+  const types = ['pearl', 'peach', 'coin'];
+  food.type = types[Math.floor(Math.random() * types.length)];
 }
 
-function spawnParticles(x, y, hue) {
+function spawnParticles(x, y) {
   const cx = x * CELL + CELL / 2;
   const cy = y * CELL + CELL / 2;
-  for (let i = 0; i < 12; i++) {
-    const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.5;
-    const speed = 1.5 + Math.random() * 3;
+  // Ink splatter particles
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * 2 / 10) * i + Math.random() * 0.6;
+    const spd = 1 + Math.random() * 2.5;
     particles.push({
       x: cx, y: cy,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
       life: 1,
-      decay: 0.02 + Math.random() * 0.03,
-      hue: hue + Math.random() * 40 - 20,
-      size: 2 + Math.random() * 3,
+      decay: 0.015 + Math.random() * 0.025,
+      size: 1.5 + Math.random() * 3,
+      type: Math.random() > 0.5 ? 'ink' : 'vermillion',
     });
   }
+}
+
+function addInkTrail(x, y) {
+  inkTrails.push({
+    x: x * CELL + CELL / 2,
+    y: y * CELL + CELL / 2,
+    life: 1,
+    decay: 0.003,
+    size: 3 + Math.random() * 4,
+  });
+  if (inkTrails.length > 200) inkTrails.shift();
 }
 
 function update() {
   dir = { ...nextDir };
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-  // Wall collision
   if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return gameOver();
-  // Self collision
   if (snake.some(s => s.x === head.x && s.y === head.y)) return gameOver();
 
   snake.unshift(head);
+  addInkTrail(head.x, head.y);
 
   if (head.x === food.x && head.y === food.y) {
     score++;
-    scoreEl.textContent = score;
+    scoreEl.textContent = toCN(score);
     scoreEl.classList.add('pop');
     setTimeout(() => scoreEl.classList.remove('pop'), 150);
 
     if (score > best) {
       best = score;
-      bestEl.textContent = best;
-      localStorage.setItem('neonSnakeBest', best);
+      bestEl.textContent = toCN(best);
+      localStorage.setItem('cnSnakeBest', best);
     }
 
-    spawnParticles(food.x, food.y, food.hue);
+    spawnParticles(food.x, food.y);
     placeFood();
     if (speed > 55) speed -= 2;
   } else {
@@ -432,118 +510,226 @@ function update() {
   }
 }
 
-function drawCell(x, y, color, glow, radius) {
-  const px = x * CELL;
-  const py = y * CELL;
-  const gap = 1;
-
-  if (glow) {
-    ctx.shadowColor = color;
-    ctx.shadowBlur = glow;
-  }
-
-  if (radius) {
-    const r = radius;
-    const w = CELL - gap * 2;
-    const h = CELL - gap * 2;
-    const cx = px + gap;
-    const cy = py + gap;
-    ctx.beginPath();
-    ctx.moveTo(cx + r, cy);
-    ctx.arcTo(cx + w, cy, cx + w, cy + h, r);
-    ctx.arcTo(cx + w, cy + h, cx, cy + h, r);
-    ctx.arcTo(cx, cy + h, cx, cy, r);
-    ctx.arcTo(cx, cy, cx + w, cy, r);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-  } else {
-    ctx.fillStyle = color;
-    ctx.fillRect(px + gap, py + gap, CELL - gap * 2, CELL - gap * 2);
-  }
-
-  ctx.shadowBlur = 0;
-}
-
 function draw() {
-  // Clear
-  ctx.fillStyle = 'rgba(8, 8, 15, 1)';
+  // Paper background
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Grid dots
-  ctx.fillStyle = 'rgba(0, 255, 136, 0.04)';
-  for (let x = 0; x < COLS; x++) {
-    for (let y = 0; y < ROWS; y++) {
-      ctx.fillRect(x * CELL + CELL / 2 - 0.5, y * CELL + CELL / 2 - 0.5, 1, 1);
-    }
+  // Subtle paper grain noise
+  ctx.globalAlpha = 0.03;
+  for (let i = 0; i < 80; i++) {
+    ctx.fillStyle = INK;
+    ctx.fillRect(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      Math.random() * 2, Math.random() * 2
+    );
+  }
+  ctx.globalAlpha = 1;
+
+  // Ink trails (ink wash effect)
+  for (const t of inkTrails) {
+    ctx.globalAlpha = t.life * 0.08;
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Grid - faint brush strokes
+  ctx.strokeStyle = 'rgba(44, 24, 16, 0.04)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= COLS; x++) {
+    ctx.beginPath();
+    ctx.moveTo(x * CELL, 0);
+    ctx.lineTo(x * CELL, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= ROWS; y++) {
+    ctx.beginPath();
+    ctx.moveTo(0, y * CELL);
+    ctx.lineTo(canvas.width, y * CELL);
+    ctx.stroke();
   }
 
-  // Food glow aura
+  // Decorative mountains in background (ink wash style)
+  ctx.globalAlpha = 0.035;
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height);
+  ctx.lineTo(0, canvas.height * 0.7);
+  ctx.quadraticCurveTo(canvas.width * 0.15, canvas.height * 0.5, canvas.width * 0.25, canvas.height * 0.65);
+  ctx.quadraticCurveTo(canvas.width * 0.35, canvas.height * 0.45, canvas.width * 0.5, canvas.height * 0.6);
+  ctx.quadraticCurveTo(canvas.width * 0.65, canvas.height * 0.4, canvas.width * 0.75, canvas.height * 0.55);
+  ctx.quadraticCurveTo(canvas.width * 0.9, canvas.height * 0.48, canvas.width, canvas.height * 0.6);
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Food
   const fx = food.x * CELL + CELL / 2;
   const fy = food.y * CELL + CELL / 2;
-  const foodColor = `hsl(${food.hue}, 100%, 60%)`;
-  const grad = ctx.createRadialGradient(fx, fy, 2, fx, fy, CELL * 1.8);
-  grad.addColorStop(0, `hsla(${food.hue}, 100%, 60%, 0.15)`);
-  grad.addColorStop(1, 'transparent');
+  const pulse = 0.85 + Math.sin(Date.now() * 0.005) * 0.15;
+
+  ctx.save();
+  // Glow aura
+  const grad = ctx.createRadialGradient(fx, fy, 2, fx, fy, CELL * 1.5);
+  if (food.type === 'pearl') {
+    grad.addColorStop(0, 'rgba(196, 148, 58, 0.2)');
+    grad.addColorStop(1, 'transparent');
+  } else if (food.type === 'peach') {
+    grad.addColorStop(0, 'rgba(194, 58, 43, 0.15)');
+    grad.addColorStop(1, 'transparent');
+  } else {
+    grad.addColorStop(0, 'rgba(196, 148, 58, 0.2)');
+    grad.addColorStop(1, 'transparent');
+  }
   ctx.fillStyle = grad;
   ctx.fillRect(fx - CELL * 2, fy - CELL * 2, CELL * 4, CELL * 4);
 
-  // Food
-  const pulse = 0.8 + Math.sin(Date.now() * 0.008) * 0.2;
-  ctx.save();
   ctx.globalAlpha = pulse;
-  drawCell(food.x, food.y, foodColor, 15, 5);
+  ctx.font = `${CELL - 2}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (food.type === 'pearl') {
+    // Draw a golden pearl
+    ctx.fillStyle = GOLD;
+    ctx.shadowColor = 'rgba(196, 148, 58, 0.6)';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(fx, fy, CELL / 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(fx - 2, fy - 2, CELL / 7, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (food.type === 'peach') {
+    ctx.fillText('🍑', fx, fy + 1);
+  } else {
+    ctx.fillText('🪙', fx, fy + 1);
+  }
   ctx.restore();
 
-  // Snake body
+  // Snake body - ink brush style
   for (let i = snake.length - 1; i >= 0; i--) {
-    const t = 1 - i / snake.length;
-    const hue = 140 + i * 3;
-    const light = 45 + t * 20;
-    const alpha = 0.5 + t * 0.5;
-    const color = `hsla(${hue}, 100%, ${light}%, ${alpha})`;
-    const glow = i === 0 ? 12 : (i < 3 ? 6 : 0);
-    drawCell(snake[i].x, snake[i].y, color, glow, i === 0 ? 5 : 3);
+    const seg = snake[i];
+    const px = seg.x * CELL;
+    const py = seg.y * CELL;
+    const t = 1 - i / Math.max(snake.length, 1);
+
+    if (i === 0) {
+      // Head - darker, larger, with character
+      ctx.fillStyle = INK;
+      ctx.shadowColor = 'rgba(44, 24, 16, 0.3)';
+      ctx.shadowBlur = 6;
+      const r = CELL / 2 - 1;
+      ctx.beginPath();
+      ctx.arc(px + CELL / 2, py + CELL / 2, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Eyes - small red dots
+      const hx = px + CELL / 2;
+      const hy = py + CELL / 2;
+      const eyeOff = 4;
+      let e1, e2;
+      if (dir.x === 1) { e1 = { x: hx + 4, y: hy - eyeOff }; e2 = { x: hx + 4, y: hy + eyeOff }; }
+      else if (dir.x === -1) { e1 = { x: hx - 4, y: hy - eyeOff }; e2 = { x: hx - 4, y: hy + eyeOff }; }
+      else if (dir.y === -1) { e1 = { x: hx - eyeOff, y: hy - 4 }; e2 = { x: hx + eyeOff, y: hy - 4 }; }
+      else { e1 = { x: hx - eyeOff, y: hy + 4 }; e2 = { x: hx + eyeOff, y: hy + 4 }; }
+
+      ctx.fillStyle = VERMILLION;
+      ctx.beginPath();
+      ctx.arc(e1.x, e1.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(e2.x, e2.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tiny forked tongue
+      if (dir.x === 1) {
+        drawTongue(hx + CELL/2 - 2, hy, 0);
+      } else if (dir.x === -1) {
+        drawTongue(hx - CELL/2 + 2, hy, Math.PI);
+      } else if (dir.y === -1) {
+        drawTongue(hx, hy - CELL/2 + 2, -Math.PI/2);
+      } else {
+        drawTongue(hx, hy + CELL/2 - 2, Math.PI/2);
+      }
+    } else {
+      // Body segments - ink wash with varying opacity
+      const alpha = 0.3 + t * 0.6;
+      const size = CELL / 2 - 2 + t * 2;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = INK;
+      ctx.beginPath();
+      ctx.arc(px + CELL / 2, py + CELL / 2, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle scale pattern on every 3rd segment
+      if (i % 3 === 0 && i < snake.length - 1) {
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.strokeStyle = PAPER;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(px + CELL / 2, py + CELL / 2, size * 0.5, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+    }
   }
 
-  // Snake head eyes
-  if (snake.length > 0) {
-    const h = snake[0];
-    const hx = h.x * CELL + CELL / 2;
-    const hy = h.y * CELL + CELL / 2;
-    const eyeOff = 4;
-    const eyeSize = 2.5;
-
-    let e1, e2;
-    if (dir.x === 1) { e1 = { x: hx + 4, y: hy - eyeOff }; e2 = { x: hx + 4, y: hy + eyeOff }; }
-    else if (dir.x === -1) { e1 = { x: hx - 4, y: hy - eyeOff }; e2 = { x: hx - 4, y: hy + eyeOff }; }
-    else if (dir.y === -1) { e1 = { x: hx - eyeOff, y: hy - 4 }; e2 = { x: hx + eyeOff, y: hy - 4 }; }
-    else { e1 = { x: hx - eyeOff, y: hy + 4 }; e2 = { x: hx + eyeOff, y: hy + 4 }; }
-
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = '#fff';
-    ctx.shadowBlur = 6;
+  // Draw connection between segments for smooth body
+  ctx.strokeStyle = INK;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < snake.length - 1; i++) {
+    const a = snake[i];
+    const b = snake[i + 1];
+    const t = 1 - i / Math.max(snake.length, 1);
+    ctx.globalAlpha = 0.3 + t * 0.5;
+    ctx.lineWidth = (CELL / 2 - 2 + t * 2) * 1.6;
     ctx.beginPath();
-    ctx.arc(e1.x, e1.y, eyeSize, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(e2.x, e2.y, eyeSize, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.moveTo(a.x * CELL + CELL / 2, a.y * CELL + CELL / 2);
+    ctx.lineTo(b.x * CELL + CELL / 2, b.y * CELL + CELL / 2);
+    ctx.stroke();
   }
+  ctx.globalAlpha = 1;
 
-  // Particles
+  // Particles (ink splatters)
   for (const p of particles) {
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = `hsl(${p.hue}, 100%, 70%)`;
-    ctx.shadowColor = `hsl(${p.hue}, 100%, 70%)`;
-    ctx.shadowBlur = 8;
+    ctx.globalAlpha = p.life * 0.7;
+    ctx.fillStyle = p.type === 'ink' ? INK : VERMILLION;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  ctx.shadowBlur = 0;
+
+  // Border decoration - thin vermillion line inside
+  ctx.strokeStyle = 'rgba(194, 58, 43, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+}
+
+function drawTongue(x, y, angle) {
+  const tongueWiggle = Math.sin(Date.now() * 0.02) * 0.3;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle + tongueWiggle);
+  ctx.strokeStyle = VERMILLION;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(5, -2);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(5, 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function updateParticles() {
@@ -551,22 +737,26 @@ function updateParticles() {
     const p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.vx *= 0.96;
-    p.vy *= 0.96;
+    p.vx *= 0.95;
+    p.vy *= 0.95;
     p.life -= p.decay;
     if (p.life <= 0) particles.splice(i, 1);
   }
+  for (const t of inkTrails) {
+    t.life -= t.decay;
+  }
+  inkTrails = inkTrails.filter(t => t.life > 0);
 }
 
 function gameOver() {
   running = false;
-  overlayTitle.textContent = '游戏结束';
+  overlayTitle.textContent = '落笔收官';
   overlayTitle.className = 'overlay-title gameover';
-  overlaySub.textContent = score === best && score > 0 ? '🏆 新纪录！' : '';
+  overlaySub.textContent = score === best && score > 0 ? '新纪录！妙笔生花' : '再接再厉';
   overlayScore.style.display = 'block';
-  overlayScore.textContent = score;
+  overlayScore.textContent = toCN(score);
   overlayScoreLabel.style.display = 'block';
-  overlayScoreLabel.textContent = 'FINAL SCORE';
+  overlayScoreLabel.textContent = '最终得分';
   startBtn.textContent = '再来一局';
   overlay.classList.remove('hidden');
 }
