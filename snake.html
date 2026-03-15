@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霓虹蛇 | Neon Snake</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Background grid */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .game-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #00ff88, #00ccff, #ff00cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4));
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4)); }
+    50% { filter: drop-shadow(0 0 35px rgba(0, 204, 255, 0.6)); }
+  }
+
+  .hud {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .hud-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .hud-label {
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+    color: rgba(0, 255, 136, 0.5);
+    font-weight: 400;
+  }
+
+  .hud-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+    min-width: 80px;
+    text-align: center;
+    transition: transform 0.15s, color 0.15s;
+  }
+
+  .hud-value.best {
+    color: #00ccff;
+    text-shadow: 0 0 10px rgba(0, 204, 255, 0.6);
+  }
+
+  .hud-value.pop {
+    transform: scale(1.3);
+    color: #fff;
+  }
+
+  .canvas-container {
+    position: relative;
+    border: 2px solid rgba(0, 255, 136, 0.3);
+    border-radius: 4px;
+    box-shadow:
+      0 0 30px rgba(0, 255, 136, 0.15),
+      inset 0 0 30px rgba(0, 255, 136, 0.05),
+      0 0 80px rgba(0, 255, 136, 0.08);
+  }
+
+  canvas {
+    display: block;
+    border-radius: 2px;
+  }
+
+  .overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 5, 10, 0.85);
+    backdrop-filter: blur(4px);
+    border-radius: 2px;
+    transition: opacity 0.3s;
+    z-index: 10;
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin-bottom: 12px;
+  }
+
+  .overlay-title.gameover {
+    background: linear-gradient(135deg, #ff0066, #ff6600);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 15px rgba(255, 0, 102, 0.5));
+  }
+
+  .overlay-title.ready {
+    background: linear-gradient(135deg, #00ff88, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.5));
+  }
+
+  .overlay-sub {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+  }
+
+  .overlay-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
+  }
+
+  .overlay-score-label {
+    font-size: 0.7rem;
+    letter-spacing: 5px;
+    color: rgba(0, 255, 136, 0.6);
+    margin-bottom: 30px;
+  }
+
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    padding: 14px 40px;
+    border: 2px solid #00ff88;
+    background: transparent;
+    color: #00ff88;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; right: 0; bottom: 0;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.15), transparent);
+    transition: left 0.4s;
+  }
+
+  .btn:hover {
+    background: rgba(0, 255, 136, 0.1);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn:hover::before { left: 100%; }
+
+  .controls-hint {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 2px;
+    margin-top: 14px;
+  }
+
+  /* Mobile controls */
+  .mobile-controls {
+    display: none;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .d-btn {
+    width: 56px;
+    height: 56px;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    background: rgba(0, 255, 136, 0.05);
+    color: rgba(0, 255, 136, 0.7);
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  .d-btn:active {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: #00ff88;
+  }
+
+  .d-row { display: flex; justify-content: center; gap: 6px; }
+  .d-spacer { width: 56px; height: 56px; }
+
+  @media (max-width: 600px) or (pointer: coarse) {
+    .mobile-controls { display: flex; flex-direction: column; align-items: center; }
+    .controls-hint { display: none; }
+    .title { font-size: 1.6rem; letter-spacing: 4px; }
+    .hud-value { font-size: 1.3rem; }
+  }
+
+  /* Particles */
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+
+<div class="game-wrapper">
+  <div class="title">霓虹蛇</div>
+
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-value" id="score">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">BEST</span>
+      <span class="hud-value best" id="best">0</span>
+    </div>
+  </div>
+
+  <div class="canvas-container">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="overlay">
+      <div class="overlay-title ready" id="overlayTitle">准备好了吗</div>
+      <div class="overlay-sub" id="overlaySub"></div>
+      <div class="overlay-score" id="overlayScore" style="display:none"></div>
+      <div class="overlay-score-label" id="overlayScoreLabel" style="display:none"></div>
+      <button class="btn" id="startBtn">开始</button>
+    </div>
+  </div>
+
+  <div class="controls-hint">方向键 / WASD 控制方向</div>
+
+  <div class="mobile-controls">
+    <div class="d-row">
+      <div class="d-spacer"></div>
+      <div class="d-btn" data-dir="up">▲</div>
+      <div class="d-spacer"></div>
+    </div>
+    <div class="d-row">
+      <div class="d-btn" data-dir="left">◀</div>
+      <div class="d-btn" data-dir="down">▼</div>
+      <div class="d-btn" data-dir="right">▶</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlaySub = document.getElementById('overlaySub');
+const overlayScore = document.getElementById('overlayScore');
+const overlayScoreLabel = document.getElementById('overlayScoreLabel');
+const startBtn = document.getElementById('startBtn');
+
+const CELL = 20;
+const COLS = 25;
+const ROWS = 25;
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+let snake, dir, nextDir, food, score, best, running, speed, lastTime, particles;
+
+best = parseInt(localStorage.getItem('neonSnakeBest') || '0');
+bestEl.textContent = best;
+
+function init() {
+  const mid = Math.floor(COLS / 2);
+  snake = [
+    { x: mid, y: Math.floor(ROWS / 2) },
+    { x: mid - 1, y: Math.floor(ROWS / 2) },
+    { x: mid - 2, y: Math.floor(ROWS / 2) },
+  ];
+  dir = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  score = 0;
+  speed = 120;
+  lastTime = 0;
+  particles = [];
+  scoreEl.textContent = '0';
+  placeFood();
+}
+
+function placeFood() {
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+  food = pos;
+  food.hue = Math.random() * 360;
+}
+
+function spawnParticles(x, y, hue) {
+  const cx = x * CELL + CELL / 2;
+  const cy = y * CELL + CELL / 2;
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.5;
+    const speed = 1.5 + Math.random() * 3;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      decay: 0.02 + Math.random() * 0.03,
+      hue: hue + Math.random() * 40 - 20,
+      size: 2 + Math.random() * 3,
+    });
+  }
+}
+
+function update() {
+  dir = { ...nextDir };
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // Wall collision
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return gameOver();
+  // Self collision
+  if (snake.some(s => s.x === head.x && s.y === head.y)) return gameOver();
+
+  snake.unshift(head);
+
+  if (head.x === food.x && head.y === food.y) {
+    score++;
+    scoreEl.textContent = score;
+    scoreEl.classList.add('pop');
+    setTimeout(() => scoreEl.classList.remove('pop'), 150);
+
+    if (score > best) {
+      best = score;
+      bestEl.textContent = best;
+      localStorage.setItem('neonSnakeBest', best);
+    }
+
+    spawnParticles(food.x, food.y, food.hue);
+    placeFood();
+    if (speed > 55) speed -= 2;
+  } else {
+    snake.pop();
+  }
+}
+
+function drawCell(x, y, color, glow, radius) {
+  const px = x * CELL;
+  const py = y * CELL;
+  const gap = 1;
+
+  if (glow) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
+  }
+
+  if (radius) {
+    const r = radius;
+    const w = CELL - gap * 2;
+    const h = CELL - gap * 2;
+    const cx = px + gap;
+    const cy = py + gap;
+    ctx.beginPath();
+    ctx.moveTo(cx + r, cy);
+    ctx.arcTo(cx + w, cy, cx + w, cy + h, r);
+    ctx.arcTo(cx + w, cy + h, cx, cy + h, r);
+    ctx.arcTo(cx, cy + h, cx, cy, r);
+    ctx.arcTo(cx, cy, cx + w, cy, r);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  } else {
+    ctx.fillStyle = color;
+    ctx.fillRect(px + gap, py + gap, CELL - gap * 2, CELL - gap * 2);
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+function draw() {
+  // Clear
+  ctx.fillStyle = 'rgba(8, 8, 15, 1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid dots
+  ctx.fillStyle = 'rgba(0, 255, 136, 0.04)';
+  for (let x = 0; x < COLS; x++) {
+    for (let y = 0; y < ROWS; y++) {
+      ctx.fillRect(x * CELL + CELL / 2 - 0.5, y * CELL + CELL / 2 - 0.5, 1, 1);
+    }
+  }
+
+  // Food glow aura
+  const fx = food.x * CELL + CELL / 2;
+  const fy = food.y * CELL + CELL / 2;
+  const foodColor = `hsl(${food.hue}, 100%, 60%)`;
+  const grad = ctx.createRadialGradient(fx, fy, 2, fx, fy, CELL * 1.8);
+  grad.addColorStop(0, `hsla(${food.hue}, 100%, 60%, 0.15)`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(fx - CELL * 2, fy - CELL * 2, CELL * 4, CELL * 4);
+
+  // Food
+  const pulse = 0.8 + Math.sin(Date.now() * 0.008) * 0.2;
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  drawCell(food.x, food.y, foodColor, 15, 5);
+  ctx.restore();
+
+  // Snake body
+  for (let i = snake.length - 1; i >= 0; i--) {
+    const t = 1 - i / snake.length;
+    const hue = 140 + i * 3;
+    const light = 45 + t * 20;
+    const alpha = 0.5 + t * 0.5;
+    const color = `hsla(${hue}, 100%, ${light}%, ${alpha})`;
+    const glow = i === 0 ? 12 : (i < 3 ? 6 : 0);
+    drawCell(snake[i].x, snake[i].y, color, glow, i === 0 ? 5 : 3);
+  }
+
+  // Snake head eyes
+  if (snake.length > 0) {
+    const h = snake[0];
+    const hx = h.x * CELL + CELL / 2;
+    const hy = h.y * CELL + CELL / 2;
+    const eyeOff = 4;
+    const eyeSize = 2.5;
+
+    let e1, e2;
+    if (dir.x === 1) { e1 = { x: hx + 4, y: hy - eyeOff }; e2 = { x: hx + 4, y: hy + eyeOff }; }
+    else if (dir.x === -1) { e1 = { x: hx - 4, y: hy - eyeOff }; e2 = { x: hx - 4, y: hy + eyeOff }; }
+    else if (dir.y === -1) { e1 = { x: hx - eyeOff, y: hy - 4 }; e2 = { x: hx + eyeOff, y: hy - 4 }; }
+    else { e1 = { x: hx - eyeOff, y: hy + 4 }; e2 = { x: hx + eyeOff, y: hy + 4 }; }
+
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(e1.x, e1.y, eyeSize, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(e2.x, e2.y, eyeSize, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Particles
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = `hsl(${p.hue}, 100%, 70%)`;
+    ctx.shadowColor = `hsl(${p.hue}, 100%, 70%)`;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life -= p.decay;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function gameOver() {
+  running = false;
+  overlayTitle.textContent = '游戏结束';
+  overlayTitle.className = 'overlay-title gameover';
+  overlaySub.textContent = score === best && score > 0 ? '🏆 新纪录！' : '';
+  overlayScore.style.display = 'block';
+  overlayScore.textContent = score;
+  overlayScoreLabel.style.display = 'block';
+  overlayScoreLabel.textContent = 'FINAL SCORE';
+  startBtn.textContent = '再来一局';
+  overlay.classList.remove('hidden');
+}
+
+function loop(ts) {
+  if (!running) { draw(); updateParticles(); requestAnimationFrame(loop); return; }
+  if (ts - lastTime >= speed) {
+    lastTime = ts;
+    update();
+  }
+  updateParticles();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  init();
+  running = true;
+  overlay.classList.add('hidden');
+  lastTime = performance.now();
+}
+
+// Input
+const dirMap = {
+  ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+  ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+  w: { x: 0, y: -1 }, s: { x: 0, y: 1 },
+  a: { x: -1, y: 0 }, d: { x: 1, y: 0 },
+  W: { x: 0, y: -1 }, S: { x: 0, y: 1 },
+  A: { x: -1, y: 0 }, D: { x: 1, y: 0 },
+};
+
+document.addEventListener('keydown', e => {
+  const d = dirMap[e.key];
+  if (d && (d.x + dir.x !== 0 || d.y + dir.y !== 0)) {
+    nextDir = d;
+    e.preventDefault();
+  }
+  if (e.key === ' ' && !running) {
+    startGame();
+    e.preventDefault();
+  }
+});
+
+// Mobile
+const mDirMap = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+document.querySelectorAll('.d-btn').forEach(btn => {
+  btn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const d = mDirMap[btn.dataset.dir];
+    if (d && (d.x + dir.x !== 0 || d.y + dir.y !== 0)) nextDir = d;
+  });
+});
+
+// Swipe
+let touchStartX, touchStartY;
+canvas.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+canvas.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+  let d;
+  if (Math.abs(dx) > Math.abs(dy)) d = dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+  else d = dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 };
+  if (d.x + dir.x !== 0 || d.y + dir.y !== 0) nextDir = d;
+});
+
+startBtn.addEventListener('click', startGame);
+
+init();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
